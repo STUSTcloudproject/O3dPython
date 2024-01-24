@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import threading
 
-# RGB Camera
+# Color Stream
 def update_color_image():
     global color_colormap, stop_thread, color_image
     while not stop_thread:
@@ -23,7 +23,7 @@ def update_color_image():
         label_color.image = color_colormap
         window.update()
 
-# Depth
+# Depth Stream
 def update_depth_image():
     global depth_colormap, depth_image, stop_thread
     while not stop_thread:
@@ -43,7 +43,7 @@ def update_depth_image():
         window.update()
 
 
-# Infrared
+# Infrared Stream
 def update_infrared_image():
     global infrared_colormap, stop_thread, infrared_image
     while not stop_thread:
