@@ -82,7 +82,7 @@ color_image = None
 depth_image = None
 infrared_image = None
 
-# 初始化 RealSense 流
+# 初始化 RealSense
 pipeline = rs.pipeline()
 config = rs.config()
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
