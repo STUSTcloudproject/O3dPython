@@ -1,31 +1,15 @@
+import open3d as o3d
 import tkinter as tk
 from PIL import Image, ImageTk
 import pyrealsense2 as rs
 import numpy as np
 import cv2
 import threading
+import image_saver as iser
+import stream_processing as spro
 
-# Color Stream
-def update_color_image():
-    global color_colormap, stop_thread, color_image
-    while not stop_thread:
-        frames = pipeline.wait_for_frames()
-        color_frame = frames.get_color_frame()
-        if not color_frame:
-            continue
-
-        color_image = np.asanyarray(color_frame.get_data())
-        color_colormap = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
-        color_colormap = Image.fromarray(color_colormap)
-        color_colormap = ImageTk.PhotoImage(image=color_colormap)
-
-        label_color.config(image=color_colormap)
-        label_color.image = color_colormap
-        window.update()
-
-# Depth Stream
-def update_depth_image():
-    global depth_colormap, depth_image, stop_thread
+def update_image():
+    global color_image, depth_image, infrared_image, stop_thread
     while not stop_thread:
         try:
             frames = pipeline.wait_for_frames()
@@ -33,63 +17,51 @@ def update_depth_image():
             print(f"RealSense error: {e}")
             continue
         except Exception as e:
-            print(f"Unexpected error: {e}")
-            
+            print(f"Unexpected error: {e}")        
             continue
-        
+
+        color_frame = frames.get_color_frame()
         depth_frame = frames.get_depth_frame()
-        if not depth_frame:
-            continue
-
-        depth_image = np.asanyarray(depth_frame.get_data())
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-        depth_colormap = cv2.cvtColor(depth_colormap, cv2.COLOR_BGR2RGB)
-        depth_colormap = Image.fromarray(depth_colormap)
-        depth_colormap = ImageTk.PhotoImage(image=depth_colormap)
-
-        label_depth.config(image=depth_colormap)
-        label_depth.image = depth_colormap
-        window.update()
-
-
-# Infrared Stream
-def update_infrared_image():
-    global infrared_colormap, stop_thread, infrared_image
-    while not stop_thread:
-        frames = pipeline.wait_for_frames()
         infrared_frame = frames.get_infrared_frame(0)
-        if not infrared_frame:
+
+        if not color_frame or not depth_frame or not infrared_frame:
             continue
 
-        infrared_image = np.asanyarray(infrared_frame.get_data())
-        infrared_colormap = cv2.cvtColor(infrared_image, cv2.COLOR_GRAY2BGR)
-        infrared_colormap = Image.fromarray(infrared_colormap)
-        infrared_colormap = ImageTk.PhotoImage(image=infrared_colormap)
+        color_image = np.asanyarray(color_frame.get_data()) # Color Stream
+        depth_image = np.asanyarray(depth_frame.get_data()) # Depth Stream
+        infrared_image = np.asanyarray(infrared_frame.get_data()) # Infrared Stream
 
-        label_infrared.config(image=infrared_colormap)
-        label_infrared.image = infrared_colormap
-        window.update()
+        color_colormap = spro.process_color_image(color_image)
+        depth_colormap = spro.process_depth_image(depth_image)
+        infrared_colormap = spro.process_infrared_image(infrared_image)
 
+        window.after(0, update_gui, color_colormap, depth_colormap, infrared_colormap)
+
+def update_gui(color_colormap, depth_colormap, infrared_colormap):
+    label_color.config(image=color_colormap)
+    label_color.image = color_colormap
+    label_depth.config(image=depth_colormap)
+    label_depth.image = depth_colormap
+    label_infrared.config(image=infrared_colormap)
+    label_infrared.image = infrared_colormap
+    
 # 拍照並保存圖像
 def capture_and_save_images():
     global depth_image, color_image, infrared_image
 
-    if depth_image is not None:
-        cv2.imwrite('depth_image.png', depth_image)  # 直接保存原始深度圖像
-    if color_image is not None:
-        cv2.imwrite('color_image.png', color_image)
-    if infrared_image is not None:
-        cv2.imwrite('infrared_image.png', infrared_image)
+    iser.save_color_image(color_image)
+    iser.save_infrared_image(infrared_image)
+    iser.save_depth_image(depth_image)      
 
 # 關閉 Tkinter 視窗
 def close_program():
     global stop_thread
     stop_thread = True
 
-global color_image, depth_image, infrared_image
 color_image = None
 depth_image = None
 infrared_image = None
+
 
 # 初始化 RealSense
 pipeline = rs.pipeline()
@@ -121,21 +93,15 @@ close_button.pack()
 
 # 開始捕獲影像的線程
 stop_thread = False
-thread_color = threading.Thread(target=update_color_image)
-thread_depth = threading.Thread(target=update_depth_image)
-thread_infrared = threading.Thread(target=update_infrared_image)
+thread_update_image = threading.Thread(target=update_image)
 
-thread_color.start()
-thread_depth.start()
-thread_infrared.start()
+thread_update_image.start()
 
 # 運行 Tkinter 主循環
 window.mainloop()
 
 # 停止捕獲影像
 stop_thread = True
-thread_color.join()
-thread_depth.join()
-thread_infrared.join()
+thread_update_image.join()
 
 pipeline.stop()
