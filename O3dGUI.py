@@ -27,7 +27,12 @@ def update_color_image():
 def update_depth_image():
     global depth_colormap, depth_image, stop_thread
     while not stop_thread:
-        frames = pipeline.wait_for_frames()
+        try:
+            frames = pipeline.wait_for_frames()
+        except Exception as e:
+            print(f"Error capturing frames: {e}")
+            continue
+        
         depth_frame = frames.get_depth_frame()
         if not depth_frame:
             continue
