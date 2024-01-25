@@ -29,8 +29,12 @@ def update_depth_image():
     while not stop_thread:
         try:
             frames = pipeline.wait_for_frames()
+        except rs.error as e:
+            print(f"RealSense error: {e}")
+            continue
         except Exception as e:
-            print(f"Error capturing frames: {e}")
+            print(f"Unexpected error: {e}")
+            
             continue
         
         depth_frame = frames.get_depth_frame()
