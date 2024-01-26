@@ -20,16 +20,16 @@ def update_image():
             print(f"Unexpected error: {e}")        
             continue
 
-        color_frame = frames.get_color_frame()
-        depth_frame = frames.get_depth_frame()
-        infrared_frame = frames.get_infrared_frame(0)
+        color_frame = frames.get_color_frame() # Color Stream
+        depth_frame = frames.get_depth_frame() # Depth Stream
+        infrared_frame = frames.get_infrared_frame(0) # Infrared Stream
 
         if not color_frame or not depth_frame or not infrared_frame:
             continue
 
-        color_image = np.asanyarray(color_frame.get_data()) # Color Stream
-        depth_image = np.asanyarray(depth_frame.get_data()) # Depth Stream
-        infrared_image = np.asanyarray(infrared_frame.get_data()) # Infrared Stream
+        color_image = np.asanyarray(color_frame.get_data())
+        depth_image = np.asanyarray(depth_frame.get_data())
+        infrared_image = np.asanyarray(infrared_frame.get_data())
 
         color_colormap = spro.process_color_image(color_image)
         depth_colormap = spro.process_depth_image(depth_image)
@@ -51,7 +51,10 @@ def capture_and_save_images():
 
     iser.save_color_image(color_image)
     iser.save_infrared_image(infrared_image)
-    iser.save_depth_image(depth_image)      
+    iser.save_depth_image(depth_image)
+    iser.save_point_cloud(depth_image, profile)   
+
+    print()   
 
 # 關閉 Tkinter 視窗
 def close_program():
@@ -69,7 +72,7 @@ config = rs.config()
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 config.enable_stream(rs.stream.infrared, 0, 640, 480, rs.format.y8, 30)
-pipeline.start(config)
+profile = pipeline.start(config)
 
 # 建立 Tkinter
 window = tk.Tk()
@@ -88,7 +91,7 @@ label_infrared.pack(side=tk.LEFT)
 capture_button = tk.Button(window, text="Capture Images", command=capture_and_save_images)
 capture_button.pack()
 
-close_button = tk.Button(window, text="Close Program", command=close_program)
+close_button = tk.Button(window, text="Stop Streaming", command=close_program)
 close_button.pack()
 
 # 開始捕獲影像的線程
