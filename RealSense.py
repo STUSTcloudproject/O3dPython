@@ -23,6 +23,11 @@ class RealSense:
         self.depth_image = None
         self.depth_colormap = None
         
+    def get_depth_image(self):
+        return self.depth_image
+    
+    def get_depth_colormap(self):
+        return self.depth_colormap
 
     def toggle_stream(self, stream_type, is_enabled, resolution):
         # 更新流状态
@@ -103,9 +108,6 @@ class RealSense:
 
                 self.depth_colormap = spro.process_depth_image(self.depth_image)
 
-                print('更新完成')
-
-                time.sleep(0.5)
 
     def restart_streaming(self):
         # 确保在启动新线程前旧线程已经停止

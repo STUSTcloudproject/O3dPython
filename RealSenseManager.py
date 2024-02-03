@@ -18,6 +18,12 @@ class RealSenseManager:
     def stop(self):
         self.Rs.stop_streaming()
         self.Rs.stop_pipeline()
+    
+    def get_depth_image(self):
+        return self.Rs.get_depth_image()
+    
+    def get_depth_colormap(self):
+        return self.Rs.get_depth_colormap()
 
     
 depth_resolutions = ["320 x 240", "640 x 480", "1024 x 768"]

@@ -44,6 +44,7 @@ class ToggleSwitch(tk.Canvas):
         self.is_on = False
         self.bind("<Button-1>", self.toggle)
         self.create_oval(2, 2, 22, 22, fill="white", outline="", tag="slider")
+        
 
     def toggle(self, event):
         self.is_on = not self.is_on
@@ -110,6 +111,10 @@ class App(tk.Tk):
 
     def set_right_panel_text(self, text):
         self.right_panel.config(text=text)  # 更新 right_panel 的 text 属性
+
+    def set_right_panel_image(self, image1):
+        self.right_panel.config(image=image1)  # 设置到 right_panel
+        self.right_panel.image = image1  # 保持对图像的引用
 
     
 if __name__ == '__main__':
